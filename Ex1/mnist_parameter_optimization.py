@@ -4,25 +4,27 @@ import torch.nn as nn
 import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-from torch.optim.lr_scheduler import StepLR
-import random 
+import random
 
 random.seed(0)
+
+file_name = "mnist_parameter_optimization"
 
 def plot_loss(losses):
     plt.plot(losses)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.savefig('mnist.png')
+    plt.ylim(0,2)
+    plt.savefig(file_name+".png")
     plt.show()
     
-
 # Hyper Parameters
 input_size = 784
 num_classes = 10
 num_epochs = 100
-batch_size = 100
-learning_rate = 1e-3
+batch_size = 1000
+learning_rate = 1e-2
+
 
 # MNIST Dataset
 train_dataset = dsets.MNIST(root='./data',
@@ -61,7 +63,8 @@ net = Net(input_size, num_classes)
 
 # Loss and Optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+
 
 
 net.train(True)
@@ -82,9 +85,8 @@ for epoch in range(num_epochs):
         loss = criterion(out, labels)
         loss.backward()
         optimizer.step()        
-        
-        #print loss for each batch of data
         #print('Epoch_id: %d, batch_id: %d, loss: %f' % (epoch,i, loss.item()))
+        
     print('!!!!!!!!!!!Epoch_id: %d, loss: %f!!!!!!!!!!!!!!!!!!' % (epoch, loss.item()))
     losses.append(loss.item())
     
@@ -102,7 +104,7 @@ for images, labels in test_loader:
 
 print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
 
-# Save the Model
 plot_loss(losses)
 
-torch.save(net.state_dict(), 'mnist.pkl')
+# Save the Model
+torch.save(net.state_dict(), file_name+".pkl")
