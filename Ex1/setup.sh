@@ -1,10 +1,26 @@
 #!/bin/bash
 
+# Function to install Miniconda
+install_miniconda() {
+    echo "Conda could not be found. Installing Miniconda..."
+    # Download Miniconda installer
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda3-latest.sh
+    # Run the installer
+    bash Miniconda3-latest.sh -b -p $HOME/miniconda
+    # Initialize conda
+    eval "$($HOME/miniconda/bin/conda shell.bash hook)"
+    conda init
+    # Remove installer
+    rm Miniconda3-latest.sh
+    echo "Miniconda installed successfully."
+}
+
 # Check if Conda is installed
 if ! command -v conda &> /dev/null
 then
-    echo "Conda could not be found. Please install Conda and try again."
-    exit
+    install_miniconda
+else
+    echo "Conda is already installed."
 fi
 
 # Create a new Conda environment
@@ -17,7 +33,7 @@ source activate rl_env
 
 # Install PyTorch
 echo "Installing PyTorch..."
-conda install pytorch torchvision torchaudio -c pytorch
+conda install pytorch torchvision torchaudio -c pytorch -y
 
 # Install OpenAI Gym
 echo "Installing OpenAI Gym..."
