@@ -3,8 +3,8 @@ import random as random
 import numpy as np
 import matplotlib.pyplot as plt
 
-random.seed(0)
-np.random.seed(0)
+#random.seed(0)
+#np.random.seed(0)
 
 def main():
     env = gym.make("CartPole-v1")
@@ -45,11 +45,15 @@ def main():
     # plot histogram of number of episodes to reach 500 reward
     print("Average number of episodes to reach perfect policy:", np.mean(num_episodes_to_perfection))
     print(len(num_episodes_to_perfection), "out of 1000 experiments reached perfect policy")
-    plt.hist(num_episodes_to_perfection, bins=20)
-    plt.xlabel("Experiment number")
-    plt.ylabel("Episodes to reach perfect policy")
+    plt.hist(num_episodes_to_perfection, bins=35)
+    plt.xlabel("Episodes to reach perfect policy")
+    plt.ylabel("Frequency")
+    plt.xlim(0, 200)
+    plt.text(100, 100, "Average to episodes reach 500: "+str(np.mean(num_episodes_to_perfection)))
+    plt.savefig("cartPole.png")
     plt.show()
     
+
     
 
 

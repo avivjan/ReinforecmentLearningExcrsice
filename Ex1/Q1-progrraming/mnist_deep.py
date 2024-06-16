@@ -6,6 +6,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import StepLR
 import random
+import numpy as np
 
 random.seed(0)
 
@@ -15,7 +16,7 @@ def plot_loss(losses):
     plt.plot(losses)
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.savefig(file_name+".png")
+    np.save("./mnist_deep.npy", losses)
     plt.show()
     
 # Hyper Parameters
@@ -75,6 +76,7 @@ net.train(True)
 losses = []
 # Train the Model
 for epoch in range(num_epochs):
+    total_loss = 0
     for i, (images, labels) in enumerate(train_loader):# batch
         #zero the gradients
         optimizer.zero_grad()
@@ -87,11 +89,13 @@ for epoch in range(num_epochs):
         out = net(images)
         loss = criterion(out, labels)
         loss.backward()
-        optimizer.step()        
-        #print('Epoch_id: %d, batch_id: %d, loss: %f' % (epoch,i, loss.item()))
+        optimizer.step()    
+        total_loss += loss.item()
+            
+
         
-    print('!!!!!!!!!!!Epoch_id: %d, loss: %f!!!!!!!!!!!!!!!!!!' % (epoch, loss.item()))
-    losses.append(loss.item())
+    print('Epoch_id: %d, loss: %f' % (epoch, loss.item()))
+    losses.append(total_loss / len(train_loader))
     
 net.eval()
 # Test the Model
