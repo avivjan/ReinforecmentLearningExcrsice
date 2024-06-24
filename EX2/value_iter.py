@@ -39,7 +39,7 @@ class MDP(object):
         self.nS = nS # number of states
         self.nA = nA # number of actions
         self.desc = desc # 2D array specifying what each grid cell means (used for plotting)
-mdp = MDP( {s : {a : [tup[:3] for tup in tups] for (a, tups) in a2d.items()} for (s, a2d) in env.P.items()}, env.nS, env.nA, env.desc)
+mdp = MDP( {s : {a : [tup[:3] for tup in tups] for (a, tups) in a2d.items()} for (s, a2d) in env.P.items()}, env.observation_space.n, env.action_space.n, env.desc)
 
 print("")
 print("mdp.P is a two-level dict where the first key is the state and the second key is the action.")
@@ -53,6 +53,23 @@ for i in range(4):
     print("P[5][%i] =" % i, mdp.P[5][i])
 print("")
 
+
+def calc_value_iteration(Vprev):#V^{(it+1)} = T[V^{(it)}]
+    v = np.zeros(mdp.nS, dtype=float)
+    pi = np.zeros(mdp.nS, dtype=int)
+    
+    for current_state in range(mdp.nS):#calc s next value
+        action_values = []
+        for action in range(mdp.nA):
+            current_action_value = 0
+            next_state_details = mdp.P[current_state][action]
+            for prob, next_state, reward in next_state_details:
+                current_action_value += prob * (reward + (GAMMA * Vprev[next_state]))
+            action_values.append(current_action_value)
+            
+        v[current_state], pi[current_state] = np.max(action_values), np.argmax(action_values)
+
+    return v, pi
 #################################
 # Programing Question No. 1 - implement where required.
 
@@ -100,7 +117,7 @@ Vs_VI, pis_VI = value_iteration(mdp, gamma=GAMMA, nIt=20)
 # Your optimal actions are shown by arrows.
 # At the bottom, the value of the different states are plotted.
 
-for (V, pi) in zip(Vs_VI[:10], pis_VI[:10]):
+for iteration, (V, pi) in enumerate(zip(Vs_VI, pis_VI)):
     plt.figure(figsize=(3,3))
     plt.imshow(V.reshape(4,4), cmap='gray', interpolation='none', clim=(0,1))
     ax = plt.gca()
@@ -120,34 +137,19 @@ for (V, pi) in zip(Vs_VI[:10], pis_VI[:10]):
                      color='g', size=12,  verticalalignment='center',
                      horizontalalignment='center', fontweight='bold')
     plt.grid(color='b', lw=2, ls='-')
+    plt.savefig(f"Iteration{iteration}.png")
 
-#(ii)
-nIt=20
+
+nIt = 20
 plt.figure(figsize=(10, 6))
 for state in range(mdp.nS):
-    state_values = [Vs_VI[it][state] for it in range(nIt + 1)]
-    plt.plot(range(nIt + 1), state_values, label=f'State {state}')
+    state_values = [Vs_VI[it][state] for it in range(nIt)]
+    plt.plot(range(1, nIt + 1), state_values, label=f'State {state}')
 plt.xlabel('Iterations')
 plt.ylabel('Value')
 plt.title('State Values as a Function of Iterations')
 plt.legend(loc='best')
+plt.xticks(range(1, nIt + 1))  # Adjusting the x-axis to have natural numbers from 1 to 20
 plt.grid(True)
+plt.savefig('state_values.png')
 plt.show()
-
-
-def calc_value_iteration(Vprev):#V^{(it+1)} = T[V^{(it)}]
-    v = np.zeros(mdp.nS, dtype=float)
-    pi = np.zeros(mdp.nS, dtype=int)
-    
-    for current_state in range(mdp.nS):#calc s next value
-        action_values = []
-        for action in range(mdp.nA):
-            current_action_value = 0
-            next_state_details = P[current_state][action]
-            for prob, next_state, reward in next_state_details:
-                current_action_value += prob * (reward + (GAMMA * Vprev[next_state]))
-            action_values.append(current_action_value)
-            
-        v[current_state], pi[current_state] = np.max(action_values), np.argmax(action_values)
-
-    return v, pi
