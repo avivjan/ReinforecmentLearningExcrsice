@@ -65,15 +65,8 @@ def compute_vpi(pi, mdp, gamma):
     Ppi=np.zeros((mdp.nS,mdp.nS))
     for state in range(mdp.nS):
         action=pi[state]
-   
-        # print(mdp.P[0])
         next_state_details = mdp.P[state][action]
-        # print(len(next_state_details))
-        # rpi[state]=next_state_details[0][2] #Reward depends only in (state,action)
-        print("hii!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-      
         for prob ,next_state ,reward in next_state_details:
-            print(prob ,next_state ,reward)
             rpi[state]+=prob*reward
             Ppi[state][next_state]+=prob
     I = np.eye(mdp.nS)
