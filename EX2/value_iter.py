@@ -137,7 +137,9 @@ for iteration, (V, pi) in enumerate(zip(Vs_VI, pis_VI)):
                      color='g', size=12,  verticalalignment='center',
                      horizontalalignment='center', fontweight='bold')
     plt.grid(color='b', lw=2, ls='-')
+    plt.title(f'Iteration {iteration}') 
     plt.savefig(f"Iteration{iteration}.png")
+    
 
 
 nIt = 20

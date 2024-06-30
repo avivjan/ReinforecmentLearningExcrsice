@@ -58,26 +58,19 @@ print("")
 # Programing Question No. 2, part 1 - implement where required.
 
 def compute_vpi(pi, mdp, gamma):
-  
-    # use pi[state] to access the action that's prescribed by this policy
-
-    rpi=np.zeros(mdp.nS)
-    Ppi=np.zeros((mdp.nS,mdp.nS))
+# use pi[state] to access the action that's prescribed by this policy
+    V = np.zeros(mdp.nS)
+    A = np.eye(mdp.nS) 
+    b = np.zeros(mdp.nS)
     for state in range(mdp.nS):
-        action=pi[state]
-        next_state_details = mdp.P[state][action]
-        for prob ,next_state ,reward in next_state_details:
-            rpi[state]+=prob*reward
-            Ppi[state][next_state]+=prob
-    I = np.eye(mdp.nS)
-
-    b = (np.linalg.inv(I-gamma * Ppi)) @ rpi
-  
-
-    V = np.linalg.solve(I,b)
-
+        for prob, next_state, reward in mdp.P[state][pi[state]]:
+            A[state][next_state] -= gamma * prob
+            b[state] += prob * reward
+            
+    V = np.linalg.solve(A, b)
     return V
-  
+
+
 
  
 
@@ -127,5 +120,6 @@ def policy_iteration(mdp, gamma, nIt):
 
 Vs_PI, pis_PI = policy_iteration(mdp, gamma=0.95, nIt=20)
 plt.plot(Vs_PI)
+plt.savefig('policy_iter.png')
 plt.show()
 
