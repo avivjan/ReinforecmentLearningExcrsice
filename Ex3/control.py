@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import lfilter
 
+
 """
 Parts of the code (cart and pole dynamics, and the state
 discretization) are inspired from code available at the RL repository
@@ -137,13 +138,15 @@ state = cart_pole.get_state(state_tuple)
 # Initialize all state rewards to zero.
 
 ###### BEGIN YOUR CODE ######
-V = np.random.uniform(0, 0.1, NUM_STATES)
-T = np.ones((NUM_STATES, NUM_ACTIONS, NUM_STATES)) / NUM_STATES
-rewards = np.zeros((NUM_STATES))
-T_counter = np.zeros((NUM_STATES, NUM_ACTIONS, NUM_STATES))
-R_sums = np.zeros((NUM_STATES))
-N_s = np.zeros((NUM_STATES,NUM_ACTIONS))
-###### END YOUR CODE ######
+V_func = np.random.uniform(0, 0.1, NUM_STATES)
+state_counter = np.zeros(NUM_STATES)
+sum_rewards = np.zeros(NUM_STATES)
+state_action_counter = np.zeros((NUM_STATES, NUM_ACTIONS))
+transition = np.ones((NUM_STATES, NUM_ACTIONS, NUM_STATES)) / NUM_STATES
+reward = np.zeros(NUM_STATES)
+state_action_nextState_counter = np.zeros((NUM_STATES, NUM_ACTIONS, NUM_STATES))
+
+###### END YOUR CODE #####
 
 # This is the criterion to end the simulation.
 # You should change it to terminate when the previous
@@ -162,7 +165,7 @@ while consecutive_no_learning_trials < NO_LEARNING_THRESHOLD:
     # optimal according to the current value function, and the current MDP
     # model.
     ###### BEGIN YOUR CODE ######
-    action = np.argmax([T[state][a] @ V for a in range(NUM_ACTIONS)])
+    action = np.argmax([transition[state][a] @ V_func for a in range(NUM_ACTIONS)])
     ###### END YOUR CODE ######
 
     # Get the next state by simulating the dynamics
@@ -195,10 +198,11 @@ while consecutive_no_learning_trials < NO_LEARNING_THRESHOLD:
     # record the number of times `state, action, new_state` occurs
     # record the rewards for every `new_state`
     # record the number of time `new_state` was reached
-    T_counter[state][action][new_state] += 1
-    R_sums[new_state] += R
-    N_s[state, action] += 1
-    
+    state_action_counter[state][action] += 1
+    state_counter[new_state] += 1
+    sum_rewards[new_state] += R
+    state_action_nextState_counter[state][action][new_state] += 1
+
     ###### END YOUR CODE ######
 
     # Recompute MDP model whenever pole falls
@@ -213,14 +217,13 @@ while consecutive_no_learning_trials < NO_LEARNING_THRESHOLD:
         # initialized uniform distribution).
 
         ##### BEGIN YOUR CODE ######
-        for state in range(NUM_STATES):
-            num_of_visits = np.sum(N_s[state])
-            if num_of_visits > 0:
-                rewards[state] = R_sums[state] / num_of_visits
-                for action in range(NUM_ACTIONS):
-                    if N_s[state][action] > 0:
-                        for nextstate in range(NUM_STATES):
-                            T[state][action][nextstate] = T_counter[state][action][nextstate] / N_s[state][action]
+        for stateIndex in range(NUM_STATES):
+            for actionIndex in range(NUM_ACTIONS):
+                if state_action_counter[stateIndex][actionIndex] > 0:
+                    transition[stateIndex][actionIndex] = state_action_nextState_counter[stateIndex][actionIndex] / state_action_counter[stateIndex][actionIndex]
+            num_state = state_counter[stateIndex]
+            reward[stateIndex] = sum_rewards[stateIndex] / state_counter[stateIndex] if num_state > 0 else 0
+                
         ##### END YOUR CODE ######
         
         
@@ -232,21 +235,22 @@ while consecutive_no_learning_trials < NO_LEARNING_THRESHOLD:
         # variable that checks when the whole simulation must end.
 
         # ###### BEGIN YOUR CODE ######
-        
-        iterations = 0
+        next_V_func = np.zeros(NUM_STATES)
+        first_iteration = True
+
         while True:
-            V_old = V.copy()        
-            for s in range(NUM_STATES):
-                V[s] = rewards[s] + GAMMA * np.max([T[s][a] @ V for a in range(NUM_ACTIONS)])
-                
-            if np.max(np.abs(V - V_old)) < TOLERANCE:
-                if iterations == 0:
-                    consecutive_no_learning_trials += 1
-                else:
-                    consecutive_no_learning_trials = 0
-                break   
-                
-            iterations += 1
+            for stateIndex in range(NUM_STATES):
+                actions = np.zeros(NUM_ACTIONS)
+                for actionIndex in range(NUM_ACTIONS):
+                    actions[actionIndex] = np.sum(transition[stateIndex][actionIndex] * V_func)
+                next_V_func[stateIndex] = reward[stateIndex] + GAMMA * np.max(actions)
+
+            if np.max(np.abs(V_func - next_V_func)) < TOLERANCE:
+                consecutive_no_learning_trials = consecutive_no_learning_trials + 1 if first_iteration else 0
+                V_func = next_V_func
+                break
+            first_iteration = False
+            V_func = next_V_func
         # ###### END YOUR CODE ######
         
 
